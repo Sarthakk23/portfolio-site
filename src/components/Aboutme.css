@@ -1,0 +1,128 @@
+/* Particle Background */
+#tsparticles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* Section Container */
+.about-section {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  padding: 4rem 2rem;
+}
+
+/* Content Container */
+.about-content-container {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem;
+  background: rgba(26, 32, 44, 0.85);
+  backdrop-filter: blur(8px);
+  border-radius: 20px;
+  border: 1px solid rgba(169, 229, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+/* Title Styling */
+.about-title {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  margin-bottom: 2.5rem;
+  text-align: center;
+}
+
+.title-gradient {
+  background: linear-gradient(90deg, #a9e5ff, #64b5f6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #64b5f6;
+}
+
+/* Text Content */
+.about-text-content {
+  line-height: 1.8;
+}
+
+.intro-text {
+  font-size: clamp(1.3rem, 2vw, 1.6rem);
+  font-weight: 600;
+  color: #a9e5ff;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.passion-text {
+  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+  font-style: italic;
+  opacity: 0.9;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+/* Experience Card */
+.experience-card {
+  background: rgba(169, 229, 255, 0.08);
+  padding: 2rem;
+  border-radius: 15px;
+  margin: 2.5rem 0;
+  border-left: 3px solid #a9e5ff;
+}
+
+.experience-item {
+  font-size: clamp(1.1rem, 1.5vw, 1.3rem);
+  margin-bottom: 1rem;
+}
+
+.experience-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Closing Text */
+.closing-text {
+  font-size: clamp(1.2rem, 1.8vw, 1.5rem);
+  font-weight: 600;
+  color: #a9e5ff;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+/* Animations */
+.about-content-container {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+  .about-content-container {
+    padding: 1.5rem;
+  }
+  
+  .experience-card {
+    padding: 1.5rem;
+  }
+}
