@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import AOS from 'aos';
 import 'aos/dist/aos.css';
 import './App.css';
@@ -54,8 +54,43 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function App() {
+function useActiveSection() {
   const [activeSection, setActiveSection] = useState('home');
+  const sectionRefs = useRef({});
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      {
+        root: null,
+        rootMargin: '-20% 0px -60% 0px', // Adjust these values as needed
+        threshold: 0.1
+      }
+    );
+
+    // Observe all sections
+    Object.values(sectionRefs.current).forEach(ref => {
+      if (ref) observer.observe(ref);
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
+  const registerSection = useCallback((id, ref) => {
+    sectionRefs.current[id] = ref;
+  }, []);
+
+  return { activeSection, registerSection };
+}
+
+function App() {
+  const { activeSection, registerSection } = useActiveSection();
   const [isScrolled, setIsScrolled] = useState(false);
   const [theme, setTheme] = useState('dark');
   const [showChatbot, setShowChatbot] = useState(false);
@@ -64,23 +99,19 @@ function App() {
 
   useEffect(() => {
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    AOS.init({ duration: 800, once: false, offset: 100, easing: 'ease-in-out-quart' });
+    AOS.init({ 
+      duration: 800, 
+      once: false, 
+      offset: 100, 
+      easing: 'ease-in-out-quart',
+      mirror: true
+    });
     
     const hour = new Date().getHours();
     setTheme(hour > 18 || hour < 6 ? 'dark' : 'light');
 
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
-      const sections = ['home', 'aboutme', 'skills', 'projects'];
-      const scrollPosition = window.scrollY + window.innerHeight / 3;
-
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element && scrollPosition > element.offsetTop && scrollPosition <= element.offsetTop + element.offsetHeight) {
-          setActiveSection(section);
-          break;
-        }
-      }
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
@@ -90,7 +121,7 @@ function App() {
   const smoothScroll = useCallback((target) => {
     setActiveSection(target);
     scroller.scrollTo(target, {
-      duration: 1800,
+      duration: 800,
       delay: 0,
       smooth: 'easeInOutQuint',
       offset: -70,
@@ -104,16 +135,33 @@ function App() {
       setTypingStart: () => setIsTyping(true),
       setTypingEnd: () => setIsTyping(false),
       smoothScroll,
-      projectData: [] // Add your projects array here
+      projectData: []
     });
   }, [smoothScroll]);
+
+  const renderSection = (id, Component) => (
+    <Element name={id}>
+      <div 
+        id={id}
+        ref={(ref) => registerSection(id, ref)}
+        className={`section ${id}`}
+        style={{ minHeight: '100vh' }}
+      >
+        <Component />
+      </div>
+    </Element>
+  );
 
   return (
     <AudioProvider>
       <div className={`app-container theme-${theme}`}>
         <AudioToggle />
         
-        <button className="chatbot-toggle" onClick={() => setShowChatbot(!showChatbot)}>
+        <button 
+          className="chatbot-toggle" 
+          onClick={() => setShowChatbot(!showChatbot)}
+          aria-label={showChatbot ? 'Close chatbot' : 'Open chatbot'}
+        >
           {showChatbot ? '✕' : '💬'}
         </button>
 
@@ -130,13 +178,23 @@ function App() {
           </div>
         )}
 
-        <Navbar activeSection={activeSection} smoothScroll={smoothScroll} isScrolled={isScrolled} />
-        <Element name="home" className="section hero"><Hero /></Element>
-        <Element name="aboutme" className="section aboutme"><Aboutme /></Element>
-        <Element name="skills" className="section skills"><Skills /></Element>
-        <Element name="projects" className="section projects"><Projects /></Element>
+        <Navbar 
+          activeSection={activeSection} 
+          smoothScroll={smoothScroll} 
+          isScrolled={isScrolled}
+          isMobile={isMobile}
+        />
         
-        {isMobile && <div className="mobile-audio-hint">Tap the 🔊 icon to control sounds</div>}
+        {renderSection('home', Hero)}
+        {renderSection('aboutme', Aboutme)}
+        {renderSection('skills', Skills)}
+        {renderSection('projects', Projects)}
+        
+        {isMobile && (
+          <div className="mobile-audio-hint">
+            Tap the 🔊 icon to control sounds
+          </div>
+        )}
       </div>
     </AudioProvider>
   );

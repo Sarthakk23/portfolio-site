@@ -430,3 +430,61 @@ p {
 .chatbot-error button:hover {
   background: var(--secondary);
 }
+/* Add to your App.css */
+.section {
+  position: relative;
+  min-height: 100vh;
+  scroll-margin-top: 80px; /* Adjust based on navbar height */
+  overflow: hidden;
+}
+
+#home, #aboutme, #skills, #projects {
+  /* Ensure IDs are targetable */
+  scroll-snap-align: start;
+}
+
+/* Add these to your App.css */
+:root {
+  --primary: #a9e5ff;
+  --secondary: #64b5f6;
+  --dark: #0f172a;
+  --dark-alt: #1a202c;
+  --light: #ffffff;
+  --transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+}
+
+/* Reset and base styles */
+html, body, #root {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+.app-container {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* Changed from center to stretch */
+}
+
+/* Section styles */
+.section {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  box-sizing: border-box;
+}
+
+/* Ensure content containers expand properly */
+.section > div {
+  width: 100%;
+  max-width: 1200px; /* Or your preferred max width */
+  margin: 0 auto;
+}
