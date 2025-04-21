@@ -19,9 +19,25 @@ function Navbar({ activeSection, smoothScroll, isScrolled, isMobile }) {
 
   const handleNavClick = (id) => {
     playSound('click');
+    
+    // Add debug logging
+    console.log(`Scrolling to ${id}`);
+    const element = document.getElementById(id);
+    console.log('Element exists:', !!element);
+    
+    // Immediate scroll attempt
     smoothScroll(id);
+    
+    // Fallback after short delay
+    setTimeout(() => {
+      const currentPos = window.pageYOffset;
+      smoothScroll(id);
+      if (window.pageYOffset === currentPos) {
+        // Last resort - direct scroll
+        element?.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
-
   return (
     <nav className={`Navbar-container ${isScrolled ? 'scrolled' : ''} ${isMobile || isMobileDevice ? 'mobile' : ''}`}>
       {links.map((link) => (

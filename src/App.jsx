@@ -24,7 +24,7 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    console.error('Chatbot Error:', error, errorInfo);
+    console.error('Component Error:', error, errorInfo);
   }
 
   handleRetry = () => {
@@ -34,22 +34,18 @@ class ErrorBoundary extends React.Component {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="chatbot-error">
-          <h4>Chatbot Service Interruption</h4>
-          <p>We're experiencing technical difficulties.</p>
+        <div className="error-fallback">
+          <h3>Component Failed to Load</h3>
+          <button onClick={this.handleRetry}>Retry</button>
           {this.state.error && (
-            <details className="error-details">
+            <details>
               <summary>Error Details</summary>
               <pre>{this.state.error.toString()}</pre>
             </details>
           )}
-          <button onClick={this.handleRetry} className="retry-button">
-            Reconnect Chatbot
-          </button>
         </div>
       );
     }
-
     return this.props.children;
   }
 }
@@ -69,21 +65,29 @@ function useActiveSection() {
       },
       {
         root: null,
-        rootMargin: '-20% 0px -60% 0px', // Adjust these values as needed
+        rootMargin: '-20% 0px -60% 0px',
         threshold: 0.1
       }
     );
 
-    // Observe all sections
-    Object.values(sectionRefs.current).forEach(ref => {
+    const currentRefs = sectionRefs.current;
+    Object.values(currentRefs).forEach(ref => {
       if (ref) observer.observe(ref);
     });
 
-    return () => observer.disconnect();
+    return () => {
+      Object.values(currentRefs).forEach(ref => {
+        if (ref) observer.unobserve(ref);
+      });
+    };
   }, []);
 
   const registerSection = useCallback((id, ref) => {
-    sectionRefs.current[id] = ref;
+    if (ref) {
+      sectionRefs.current[id] = ref;
+    } else {
+      delete sectionRefs.current[id];
+    }
   }, []);
 
   return { activeSection, registerSection };
@@ -96,17 +100,24 @@ function App() {
   const [showChatbot, setShowChatbot] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     setIsMobile(/iPhone|iPad|iPod|Android/i.test(navigator.userAgent));
-    AOS.init({ 
-      duration: 800, 
-      once: false, 
-      offset: 100, 
-      easing: 'ease-in-out-quart',
-      mirror: true
-    });
     
+    try {
+      AOS.init({
+        duration: 800,
+        once: false,
+        offset: 100,
+        easing: 'ease-in-out-quart',
+        mirror: true
+      });
+    } catch (error) {
+      console.error('AOS initialization error:', error);
+    }
+
     const hour = new Date().getHours();
     setTheme(hour > 18 || hour < 6 ? 'dark' : 'light');
 
@@ -119,15 +130,40 @@ function App() {
   }, []);
 
   const smoothScroll = useCallback((target) => {
-    setActiveSection(target);
-    scroller.scrollTo(target, {
-      duration: 800,
-      delay: 0,
-      smooth: 'easeInOutQuint',
-      offset: -70,
-      ignoreCancelEvents: true
-    });
-  }, []);
+    if (!isMounted) return;
+
+    try {
+      const element = document.getElementById(target);
+      if (!element) {
+        console.warn(`Element with ID ${target} not found`);
+        return;
+      }
+
+      setActiveSection(target);
+      const navbar = document.querySelector('.Navbar-container');
+      const navbarHeight = navbar ? navbar.offsetHeight : 70;
+
+      scroller.scrollTo(target, {
+        duration: 800,
+        delay: 0,
+        smooth: 'easeInOutQuint',
+        offset: -navbarHeight,
+        ignoreCancelEvents: true
+      });
+
+      // Fallback
+      requestAnimationFrame(() => {
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - navbarHeight;
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+      });
+    } catch (error) {
+      console.error('Scroll error:', error);
+    }
+  }, [isMounted]);
 
   const createActionProvider = useCallback((createChatBotMessage, setState) => {
     return new ActionProvider(createChatBotMessage, setState, {
@@ -140,17 +176,22 @@ function App() {
   }, [smoothScroll]);
 
   const renderSection = (id, Component) => (
-    <Element name={id}>
-      <div 
+    <ErrorBoundary key={id}>
+      <Element 
+        name={id}
         id={id}
         ref={(ref) => registerSection(id, ref)}
         className={`section ${id}`}
         style={{ minHeight: '100vh' }}
       >
         <Component />
-      </div>
-    </Element>
+      </Element>
+    </ErrorBoundary>
   );
+
+  if (!isMounted) {
+    return <div className="app-loading">Loading...</div>;
+  }
 
   return (
     <AudioProvider>
